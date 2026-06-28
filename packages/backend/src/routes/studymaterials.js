@@ -11,7 +11,27 @@ const router = Router();
  */
 router.get('/', async (req, res, next) => {
   try {
-    const materials = await StudyMaterial.find({}).sort({ createdAt: -1 });
+    const { branch, semester, type, search } = req.query;
+    const filter = {};
+
+    if (branch) {
+      filter.branch = branch;
+    }
+    if (semester) {
+      filter.semester = parseInt(semester, 10);
+    }
+    if (type) {
+      filter.type = type;
+    }
+    if (search) {
+      filter.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { subject: { $regex: search, $options: 'i' } },
+        { code: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    const materials = await StudyMaterial.find(filter).sort({ createdAt: -1 });
     res.json(materials);
   } catch (err) {
     next(err);
