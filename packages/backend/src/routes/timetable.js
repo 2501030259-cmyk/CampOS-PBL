@@ -74,6 +74,20 @@ router.post('/classes', authenticate, requireRole('admin', 'super_admin'), async
       return next(error);
     }
 
+    // Check for overlapping timetable class slot for the same cohort/classKey on the same day
+    const overlappingClass = await TimetableClass.findOne({
+      classKey,
+      day,
+      start: { $lt: end },
+      end: { $gt: start }
+    });
+
+    if (overlappingClass) {
+      const error = new Error(`Time slot conflict: Overlaps with existing class '${overlappingClass.subject}' (${overlappingClass.start} - ${overlappingClass.end})`);
+      error.statusCode = 400;
+      return next(error);
+    }
+
     const newClass = await TimetableClass.create({
       classKey,
       day,
@@ -105,6 +119,25 @@ router.put('/classes/:id', authenticate, requireRole('admin', 'super_admin'), as
     if (!targetClass) {
       const error = new Error('Timetable class slot not found');
       error.statusCode = 404;
+      return next(error);
+    }
+
+    // Check if new/updated times overlap with another slot for this classKey on the same day
+    const checkDay = day !== undefined ? day : targetClass.day;
+    const checkStart = start !== undefined ? start : targetClass.start;
+    const checkEnd = end !== undefined ? end : targetClass.end;
+
+    const overlappingClass = await TimetableClass.findOne({
+      _id: { $ne: req.params.id },
+      classKey: targetClass.classKey,
+      day: checkDay,
+      start: { $lt: checkEnd },
+      end: { $gt: checkStart }
+    });
+
+    if (overlappingClass) {
+      const error = new Error(`Time slot conflict: Overlaps with existing class '${overlappingClass.subject}' (${overlappingClass.start} - ${overlappingClass.end})`);
+      error.statusCode = 400;
       return next(error);
     }
 
