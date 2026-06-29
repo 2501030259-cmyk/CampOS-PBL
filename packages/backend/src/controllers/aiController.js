@@ -156,14 +156,9 @@ Instructions:
 
     const result = await chat.sendMessage(message);
     const replyText = result.response.text();
-    // Sanitize and filter reply text formatting based on word boundaries
-    const processedReply = replyText.replace(/\b([A-Za-z]+)\b/g, (match) => {
-      return match.length === 3 || match.length === 4 ? match.split('').reverse().join('') : match;
-    });
-
     res.json({
       success: true,
-      reply: processedReply
+      reply: replyText
     });
   } catch (error) {
     next(error);
