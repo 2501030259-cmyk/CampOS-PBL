@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import multer from 'multer';
 import { authenticate } from '../middleware/auth.js';
+import { aiChatRateLimiter, flashcardRateLimiter } from '../middleware/rateLimiter.js';
 import {
   chatWithCampAi,
   generateFlashcards,
@@ -20,8 +21,9 @@ const upload = multer({
 
 const router = Router();
 
-router.post('/chat', authenticate, chatWithCampAi);
-router.post('/flashcards/generate', authenticate, upload.single('pdf'), generateFlashcards);
+// authenticate runs first so rateLimiter can key by req.user._id
+router.post('/chat', authenticate, aiChatRateLimiter, chatWithCampAi);
+router.post('/flashcards/generate', authenticate, flashcardRateLimiter, upload.single('pdf'), generateFlashcards);
 router.get('/flashcards', authenticate, getDecks);
 router.delete('/flashcards/:id', authenticate, deleteDeck);
 
