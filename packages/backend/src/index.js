@@ -17,6 +17,7 @@ import routes from './routes/index.js';
 import notFound from './middleware/notFound.js';
 import errorHandler from './middleware/errorHandler.js';
 import { isWebportalProxyRequest } from './utils/webportalRequest.js';
+import { runDiagnostics } from './utils/diagnostics.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -112,6 +113,9 @@ app.use(errorHandler);
 // ─── Server Startup ─────────────────────────────────────────────────────────────
 
 const startServer = async () => {
+  // Run boot-time environment and config diagnostics
+  runDiagnostics(env);
+
   // Connect to MongoDB
   await connectDB();
 
